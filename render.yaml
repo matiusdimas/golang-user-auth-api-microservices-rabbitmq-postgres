@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: user-api
+    env: go
+    plan: free
+    region: singapore
+    buildCommand: go build -o main ./cmd
+    startCommand: ./main
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ALLOWED_ORIGINS
+        value: https://your-frontend-app.com,http://localhost:3000
+      - fromService:
+          type: postgres
+          name: userdb
+          property: connectionString
+        as: DATABASE_URL
+    healthCheckPath: /health
+    autoDeploy: true
+
+databases:
+  - name: userdb
+    databaseName: user_db
+    user: dimas
+    plan: free
