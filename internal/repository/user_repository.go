@@ -52,6 +52,7 @@ func (r *userRepository) GetUserByEmail(email string) (*models.User, error) {
 }
 
 func (r *userRepository) GetUserByID(id string) (*models.User, error) {
+	
 	query := `SELECT id, email, name, password_hash, created_at, updated_at 
 	          FROM users WHERE id = $1`
 	
@@ -60,9 +61,12 @@ func (r *userRepository) GetUserByID(id string) (*models.User, error) {
 		&user.ID, &user.Email, &user.Name, &user.PasswordHash, &user.CreatedAt, &user.UpdatedAt,
 	)
 	
-	if err == sql.ErrNoRows {
-		return nil, nil
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
 	}
 	
-	return user, err
+	return user, nil
 }

@@ -9,7 +9,6 @@ import (
 	"User-api/internal/repository"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/gorilla/mux"
 )
@@ -44,11 +43,4 @@ func main() {
 	}).Methods("GET")
 	log.Printf("Server starting on port %s in %s environment", cfg.Port, cfg.Environment())
 	log.Fatal(http.ListenAndServe(":"+cfg.Port, router))
-}
-
-func (c *Config) Environment() string {
-	if c.IsProduction {
-		return "production"
-	}
-	return "development"
 }

@@ -64,17 +64,13 @@ func getEnvAsInt(key string, defaultValue int) int {
 }
 
 func (c *Config) GetDBConnectionString() string {
-	if c.DatabaseURL != "" && c.IsProduction {
-		if !strings.Contains(c.DatabaseURL, "sslmode=") {
-			return c.DatabaseURL + "?sslmode=require"
-		}
-		return c.DatabaseURL
-	}
-	sslMode := "disable"
-	if c.IsProduction {
-		sslMode = "require"
-	}
+    return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=require",
+        c.DBHost, c.DBPort, c.DBUser, c.DBPassword, c.DBName)
+}
 
-	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		c.DBHost, c.DBPort, c.DBUser, c.DBPassword, c.DBName, sslMode)
+func (c *Config) Environment() string {
+	if c.IsProduction {
+		return "production"
+	}
+	return "development"
 }

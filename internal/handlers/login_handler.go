@@ -9,14 +9,24 @@ import (
 )
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	if cookie, err := r.Cookie("auth_token"); err == nil {
-		if _, err := utils.ValidateJWT(cookie.Value, h.jwtSecret); err == nil {
-			writeJSONResponse(w, http.StatusForbidden, Response{
-				Error:   true,
-				Message: "User already logged in. Please logout first",
-			})
-			return
-		}
+	getUserFunc := func(userID string) (*models.User, error) {
+    	return h.userRepo.GetUserByID(userID)
+	}
+
+	isLoggedIn, err := utils.CheckAuth(r, w, h.jwtSecret, getUserFunc, h.cfg.IsProduction)
+	if err != nil {
+		writeJSONResponse(w, http.StatusInternalServerError, Response{
+			Error:   true,
+			Message: "Database error",
+		})
+		return
+	}
+	if isLoggedIn {
+		writeJSONResponse(w, http.StatusForbidden, Response{
+			Error:   true,
+			Message: "User already logged in. Please logout first.",
+		})
+		return
 	}
 
 	var req models.LoginRequest

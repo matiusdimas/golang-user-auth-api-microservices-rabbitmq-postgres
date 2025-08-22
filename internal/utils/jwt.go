@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"User-api/internal/models"
+
 	"github.com/golang-jwt/jwt/v5"
 	"time"
 	"net/http"
@@ -57,4 +59,53 @@ func GetUserIDFromToken(tokenString, secret string) (string, error) {
 	}
 
 	return userID, nil
+}
+func CheckAuth(
+    r *http.Request,
+    w http.ResponseWriter,
+    jwtSecret string,
+    getUserByIDFunc func(string) (*models.User, error),
+    isProduction bool,
+) (bool, error) {
+    cookie, err := r.Cookie("auth_token")
+    if err != nil {
+        return false, nil
+    }
+
+    claims, err := ValidateJWT(cookie.Value, jwtSecret)
+    if err != nil {
+        DeleteAuthCookie(w, isProduction)
+        return false, nil
+    }
+
+    userID, ok := claims["user_id"].(string)
+    if !ok {
+        DeleteAuthCookie(w, isProduction)
+        return false, nil
+    }
+
+    user, err := getUserByIDFunc(userID)
+    if err != nil {
+        return false, err
+    }
+    if user == nil {
+        DeleteAuthCookie(w, isProduction)
+        return false, nil
+    }
+
+    return true, nil
+}
+
+
+func DeleteAuthCookie(w http.ResponseWriter, isProduction bool) {
+	cookie := &http.Cookie{
+		Name:     "auth_token",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   isProduction,
+		SameSite: http.SameSiteStrictMode,
+		MaxAge:   -1,
+	}
+	http.SetCookie(w, cookie)
 }
